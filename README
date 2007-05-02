@@ -44,6 +44,15 @@ SYNOPSIS
                         join ' ', $_->first_name, $_->last_name
                     } shift->authors
                 },
+            },
+            all => {
+                source => sub {
+                    my $self = shift;
+                    join ' ', map { $self->$_ } qw( name location );
+                }
+                type => 'unstored',
+                role => 'default_field' # will be search if no field prefix
+                                        # is specified
             }
         );
     

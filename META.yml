@@ -1,6 +1,6 @@
 ---
 name: DBIx-Class-Indexer-WebService-Lucene
-version: 0.01
+version: 0.02
 author:
   - 'Adam Paynter <adapay@cpan.org>'
 abstract: |-
@@ -18,7 +18,7 @@ build_requires:
 provides:
   DBIx::Class::Indexer::WebService::Lucene:
     file: lib/DBIx/Class/Indexer/WebService/Lucene.pm
-    version: 0.01
+    version: 0.02
 generated_by: Module::Build version 0.2807
 meta-spec:
   url: http://module-build.sourceforge.net/META-spec-v1.2.html

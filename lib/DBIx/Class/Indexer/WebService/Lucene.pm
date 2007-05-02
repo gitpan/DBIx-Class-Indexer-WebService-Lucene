@@ -8,7 +8,7 @@ use WebService::Lucene::Document;
 use WebService::Lucene::Field;
 use WebService::Lucene::Index;
 
-our $VERSION = '0.01';
+our $VERSION = '0.02';
 
 use base qw( DBIx::Class::Indexer DBIx::Class );
 
@@ -118,6 +118,15 @@ WebService::Lucene
                     join ' ', $_->first_name, $_->last_name
                 } shift->authors
             },
+        },
+        all => {
+            source => sub {
+                my $self = shift;
+                join ' ', map { $self->$_ } qw( name location );
+            }
+            type => 'unstored',
+            role => 'default_field' # will be search if no field prefix
+                                    # is specified
         }
     );
     
@@ -140,7 +149,6 @@ the number of actors associated with the film.
         },
     );
     
-
 =head1 METHODS
 
 =head2 new( \%connect_info, $source_class )
@@ -177,13 +185,16 @@ If the index does not yet exist, this method will create it for you.
 sub setup_index {
     my( $self, $source, $index ) = @_;
     
-    my $pk   = $self->field_for_role( $source, 'identifier' );
-    my $name = $index->name;
+    my $pk      = $self->field_for_role( $source, 'identifier' );
+    my $default = $source->indexer_connection_info->{ default_field }
+        || $self->field_for_role( $source, 'default_field' )
+        || $pk;
+    my $name    = $index->name;
     my %properties = (
         'index.defaultoperator' => 'AND',
         'index.summary'         => $name,
         'index.title'           => $name,
-        'field.<default>'       => 'all',
+        'field.<default>'       => $default,
         'field.identifier'      => $pk,
         'field.<title>'         => "[$pk]",
     );
@@ -258,7 +269,7 @@ sub setup_fields {
     # look for a field to use for "updated"
     my $mtime_cols = $source->can('mtime_columns') ? $source->mtime_columns : [];
     if( $source->can( '__column_timestamp_triggers' ) ) {
-        push @$mtime_cols, @{ $source->__column_timestamp_triggers->on_update };
+        push @$mtime_cols, @{ $source->__column_timestamp_triggers->{ on_update } };
     }
     for my $mtime_col ( @$mtime_cols ) {
         next unless $fields->{ $mtime_col };
